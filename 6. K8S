@@ -441,3 +441,78 @@ HISTORY:
    40  kops delete cluster --name rahams.k8s.local --yes
    41  kops get cluster
    42  history
+============================================================================
+
+SCRIPT:
+RUN BELOW COMMANDS MANUALLY
+#vim .bashrc
+#export PATH=$PATH:/usr/local/bin/
+#source .bashrc
+
+
+#! /bin/bash
+aws configure
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+wget https://github.com/kubernetes/kops/releases/download/v1.25.0/kops-linux-amd64
+chmod +x kops-linux-amd64 kubectl
+mv kubectl /usr/local/bin/kubectl
+mv kops-linux-amd64 /usr/local/bin/kops
+
+aws s3api create-bucket --bucket rahamssshaik09.k8s.local --region us-east-1
+aws s3api put-bucket-versioning --bucket rahamssshaik09.k8s.local --region us-east-1 --versioning-configuration Status=Enabled
+export KOPS_STATE_STORE=s3://rahamssshaik09.k8s.local
+kops create cluster --name rahams.k8s.local --zones us-east-1a --master-count=1 --master-size t2.medium --node-count=2 --node-size t2.micro
+kops update cluster --name rahams.k8s.local --yes --admin
+
+
+RUN COMMAND AFTER SCRIPT
+export KOPS_STATE_STORE=s3://rahamssshaik09.k8s.local
+kops validate cluster --wait 10m
+
+==================================================================
+NAMESPACES:
+
+NAMESPACE: It is used to divide the cluster to multiple teams on real time.
+it is used to isolate the env.
+
+CLUSTER: HOUSE
+NAMESPACES: ROOM
+
+Each namespace is isolated.
+if your are room-1 are you able to see room-2.
+we cant access the objects from one namespace to another namespace.
+
+
+TYPES:
+
+default           : Is the default namespace, all objects will create here only
+kube-node-lease   : it will store object which is taken from one namespace to another.
+kube-public	  : all the public objects will store here.      
+kube-system 	  : default k8s will create some objects, those are storing on this ns.
+
+kubectl get pod -n kube-system	: to list all pods in kube-system namespace
+kubectl get pod -n default	: to list all pods in default namespace
+kubectl get pod -n kube-public	: to list all pods in kube-public namespace
+kubectl get po -A		: to list all pods in all namespaces
+
+kubectl create ns dev	: to create namespace
+kubectl config set-context --current --namespace=dev : to switch to the namespace
+kubectl config view --minify | grep namespace : to see current namespace
+kubectl delete ns dev	: to delete namespace
+kubectl delete pod --all: to delete all pods
+
+
+NOTE: By deleting  the ns all objects also gets deleted.
+in real time we use rbac concept to restrict the access from one namespace to another.
+so users cant access/delete ns, because of the restriction we provide.
+we create roles and rolebind for the users.
+
+
+KUBECOLOR:
+
+wget https://github.com/hidetatz/kubecolor/releases/download/v0.0.25/kubecolor_0.0.25_Linux_x86_64.tar.gz
+tar -zxvf kubecolor_0.0.25_Linux_x86_64.tar.gz
+./kubecolor
+chmod +x kubecolor
+mv kubecolor /usr/local/bin/
+kubecolor get po
